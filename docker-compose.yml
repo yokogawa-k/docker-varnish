@@ -1,0 +1,3 @@
+varnishtest:
+    image: yokogawa/varnish
+    command: sh -c 'varnishtest -kv *.vtc'

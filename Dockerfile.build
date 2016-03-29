@@ -1,0 +1,30 @@
+FROM alpine
+MAINTAINER Kazuya Yokogawa "yokogawa-k@klab.com"
+
+# Alpine 本家では mode_t にパッチがあたってる...
+# http://git.alpinelinux.org/cgit/aports/plain/main/varnish/APKBUILD
+ENV VARNISH_VERSION 4.1.2
+RUN set -ex \
+ && apk add --no-cache --virtual .varnish-builddeps \
+    build-base \
+    pcre-dev \
+    ncurses-dev \
+    libedit-dev \
+    linux-headers \
+    py-docutils \
+    ca-certificates \
+ && wget https://repo.varnish-cache.org/source/varnish-4.1.2.tar.gz \
+ && tar xzf varnish-4.1.2.tar.gz \
+ && cd varnish-4.1.2 \
+ && ./configure \
+    --without-jmalloc \
+ && runDeps="$( \
+      scanelf --needed --nobanner --recursive /usr/local/bundle/gems/ \
+        | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
+        | sort -u \
+        | xargs -r apk info --installed \
+        | sort -u \
+    )" \
+ && apk add --no-cache --virtual .varnish-rundeps $runDeps \
+ && apk del .varnish-builddeps
+
